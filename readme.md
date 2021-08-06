@@ -1,0 +1,1 @@
+To run it locally, please run command: npm run dev
