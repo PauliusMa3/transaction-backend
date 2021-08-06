@@ -1,6 +1,10 @@
+const httpStatus = require("http-status");
+const ApiError = require("../utils/apiError");
+const axios = require("axios");
+
 const fetchCurrencies = async () => {
   try {
-    const currencies = await axios.get(config.currencyApi.url);
+    const { data: currencies } = await axios(config.currencyApi.url);
     return currencies;
   } catch (e) {
     throw new ApiError(

@@ -1,6 +1,5 @@
 const asyncHandler = require("../utils/asyncHandler");
-const { transactionService } = require("../services");
-const httpStatus = require("http-status");
+const { transactionService, currencyService } = require("../services");
 
 const getTransactionCommission = asyncHandler(async (req, res) => {
   const commission = await transactionService.getTransactionCommission(
@@ -12,7 +11,7 @@ const getTransactionCommission = asyncHandler(async (req, res) => {
 });
 
 const getTransactionCurrencies = asyncHandler(async (req, res) => {
-  const currencies = await transactionService.fetchCurrencies();
+  const currencies = await currencyService.fetchCurrencies();
   return res.json({
     currencies
   });
