@@ -1,55 +1,68 @@
-const { Transaction } = require("../models");
-const { getCurrencyRate } = require("./rates.service");
-
-const discountClientIds = [42];
+const moment = require("moment");
+const { transactionConstants } = require("../constants");
+const { externalCurrencyService } = require("../external");
+const { calculateCommissionValue } = require("./commission.service");
+const { transactionRepository } = require("../repositories");
 
 const getTransactionCommission = async ({
   date,
   currency,
   amount,
-  clientId
+  client_id
 }) => {
   const fromDate = moment().subtract(1, "months").format("YYYY-MM-DD");
   const toDate = moment().format("YYYY-MM-DD");
+  const { discountClientIds, hightTurnoverTransactionAmount } =
+    transactionConstants;
 
-  const existingClient = await Transaction.findOne({
-    client_id: clientId
-  });
+  try {
+    const existingClient = await transactionRepository.getTransactionByClientId(
+      client_id
+    );
+    let userMonthlyTransactionAmount = 0;
 
-  let userMonthlyTransactionAmount = 0;
+    if (existingClient) {
+      const fetchedMonthlyAMount =
+        await transactionRepository.getClientTotalAmountOverTimePeriod(
+          client_id,
+          fromDate,
+          toDate
+        );
+      console.log("fetchedMonthlyAMount: ", fetchedMonthlyAMount);
+      userMonthlyTransactionAmount =
+        fetchedMonthlyAMount.length > 0 ? fetchedMonthlyAMount[0].amount : 0;
+    }
 
-  if (existingClient) {
-    userMonthlyTransactionAmount = await Transaction.aggregate([
-      {
-        $match: { date: { $gte: fromDate, $lte: toDate }, client_id: clientId }
-      },
-      { $group: { _id: null, amount: { $sum: "$amount" } } }
-    ]);
-  } else {
-    await Transaction.create({
+    await transactionRepository.createNewTransaction({
       date,
       currency,
       amount,
-      client_id: clientId
+      client_id
     });
+
+    const hightTurnoverDiscountUser =
+      userMonthlyTransactionAmount >= hightTurnoverTransactionAmount;
+
+    const discountedClient = discountClientIds.includes(client_id);
+
+    const currencyRate = await externalCurrencyService.getCurrencyRateToEuro(
+      currency
+    );
+
+    const commissionRate = calculateCommissionValue(
+      currencyRate,
+      amount,
+      hightTurnoverDiscountUser,
+      discountedClient
+    );
+
+    return {
+      amount: commissionRate,
+      currency
+    };
+  } catch (e) {
+    throw e;
   }
-
-  const hightTurnoverDiscountUser = userMonthlyTransactionAmount > 1000;
-  const discountedClient = discountClientIds.includes(clientId);
-
-  const currencyRate = getCurrencyRate(currency);
-
-  const commissionRate = calculatedCommissionAmount(
-    currencyRate,
-    amount,
-    hightTurnoverDiscountUser,
-    discountedClient
-  );
-
-  return {
-    amount: commissionRate,
-    currency
-  };
 };
 
 module.exports = {

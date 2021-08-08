@@ -1,4 +1,4 @@
-const transactionSchema = require("./transaction.validation");
+const { transactionSchema } = require("./transaction.validation");
 
 module.exports = {
   transactionSchema

@@ -14,8 +14,21 @@ const development = {
   }
 };
 
+const test = {
+  db: {
+    host: process.env.TEST_MONGO_HOST
+  },
+  app: {
+    port: process.env.TEST_APP_PORT
+  },
+  currencyApi: {
+    url: "https://api.exchangerate.host/2021-01-01"
+  }
+};
+
 const config = {
-  development
+  development,
+  test
 };
 
 module.exports = config[env];

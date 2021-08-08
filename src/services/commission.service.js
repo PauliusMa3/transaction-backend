@@ -14,10 +14,12 @@ const calculateCommissionValue = (
     return 0.05;
   }
 
-  const calculatedCommissionAmount = amount * defaultCommissionPercentageValue;
-  const amount = amount / currencyRate;
+  const calculatedCommissionAmount =
+    (amount / currencyRate) * defaultCommissionPercentageValue;
 
-  return calculatedCommissionAmount < 0.05 ? 0.05 : calculatedCommissionAmount;
+  return calculatedCommissionAmount < 0.05
+    ? 0.05
+    : Math.round(calculatedCommissionAmount * 100) / 100;
 };
 
 module.exports = {

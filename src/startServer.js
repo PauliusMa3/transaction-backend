@@ -5,11 +5,6 @@ const cors = require("cors");
 const config = require("./config/config");
 const mongoose = require("mongoose");
 const express = require("express");
-
-// require('./loaders/mongoose');
-
-process.env.NODE_ENV = "development";
-
 const options = {
   autoIndex: false,
   poolSize: 10,
@@ -18,7 +13,7 @@ const options = {
   useUnifiedTopology: true
 };
 
-function startServer({ port } = {}) {
+function startServer() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cors());
@@ -26,12 +21,12 @@ function startServer({ port } = {}) {
   app.use("/api", appRoutes());
   app.use(errorMiddleware);
 
-  mongoose
-    .connect(config.db.host, options)
-    .then(() => {
-      logger.info("MongoDB Successfully connected!");
-      return new Promise((resolve) => {
-        const server = app.listen(port, () => {
+  return new Promise((resolve) => {
+    mongoose
+      .connect(config.db.host, options)
+      .then(() => {
+        console.log("MongoDB Successfully connected!");
+        const server = app.listen(config.app.port, () => {
           console.log(`App running on port port ${server.address().port}`);
           const serverClose = server.close.bind(server);
           server.close = () => {
@@ -43,15 +38,15 @@ function startServer({ port } = {}) {
           setupExitHandler(server);
           resolve(server);
         });
+      })
+      .catch((e) => {
+        logger.error("Failed to connect to MongoDB!");
       });
-    })
-    .catch((e) => {
-      logger.error("Failed to connect to MongoDB!");
-    });
+  });
 
   function errorMiddleware(error, req, res, next) {
     logger.error(error);
-    res.status(500);
+    res.status(error.statusCode || 500);
     res.json({
       message: error.message,
       ...(process.env.NODE_ENV === "production"

@@ -1,5 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
-const { transactionService, currencyService } = require("../services");
+const { transactionService } = require("../services");
+const { externalCurrencyService } = require("../external");
 
 const getTransactionCommission = asyncHandler(async (req, res) => {
   const commission = await transactionService.getTransactionCommission(
@@ -11,7 +12,11 @@ const getTransactionCommission = asyncHandler(async (req, res) => {
 });
 
 const getTransactionCurrencies = asyncHandler(async (req, res) => {
-  const currencies = await currencyService.fetchCurrencies();
+  const { data } = await externalCurrencyService.getAllCurrencies();
+  let currencies = [];
+  if (data.rates) {
+    currencies = Object.keys(data.rates);
+  }
   return res.json({
     currencies
   });

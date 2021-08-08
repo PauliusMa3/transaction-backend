@@ -1,14 +1,15 @@
-const Joi = require("joi").defaults((schema) =>
-  schema.options({
-    allowUnknown: true
-  })
-);
 const httpStatus = require("http-status");
 
 const validationMiddleware = (schema) => {
   return (req, res, next) => {
     const { body } = req;
-    const { error } = Joi.compile(schema).validate(body);
+
+    const validationOptions = {
+      abortEarly: false,
+      allowUnknown: true
+    };
+
+    const { error } = schema.validate(body, validationOptions);
 
     if (error) {
       const { details } = error;
